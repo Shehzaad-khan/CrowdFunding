@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Visit</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label>Donor</label>
+    <select name="donor_id" class="form-control" required>
+      {% for donor in donors %}
+      <option value="{{ donor[0] }}">{{ donor[1] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Fundraiser</label>
+    <select name="fundraiser

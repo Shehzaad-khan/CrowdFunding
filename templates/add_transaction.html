@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Transaction</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label>Donor</label>
+    <select name="donor_id" class="form-control" required>
+      {% for donor in donors %}
+      <option value="{{ donor[0] }}">{{ donor[1] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Fundraiser</label>
+    <select name="fundraiser_no" class="form-control" required>
+      {% for f in fundraisers %}
+      <option value="{{ f[0] }}">{{ f[1] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Amount</label>
+    <input type="number" name="amount" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Payment Mode</label>
+    <input type="text" name="payment_mode" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Transaction Date</label>
+    <input type="datetime-local" name="transaction_date" class="form-control" required>
+  </div>
+  <button type="submit" class="btn btn-success">Add</button>
+</form>
+{% endblock %}

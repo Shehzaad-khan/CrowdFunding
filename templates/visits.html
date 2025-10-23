@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Visits</h2>
+<a href="/add_visit" class="btn btn-primary mb-3">Add Visit</a>
+<table class="table table-bordered">
+    <tr>
+        <th>ID</th>
+        <th>Donor ID</th>
+        <th>Fundraiser ID</th>
+        <th>Visit Date</th>
+        <th>Duration</th>
+        <th>Interest Level</th>
+    </tr>
+    {% for v in visits %}
+    <tr>
+        <td>{{ v[0] }}</td>
+        <td>{{ v[1] }}</td>
+        <td>{{ v[2] }}</td>
+        <td>{{ v[3] }}</td>
+        <td>{{ v[4] }}</td>
+        <td>{{ v[5] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Add Payroll</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label>Admin</label>
+    <select name="admin_id" class="form-control" required>
+      {% for admin in admins %}
+      <option value="{{ admin[0] }}">{{ admin[1] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Fundraiser</label>
+    <select name="fundraiser_no" class="form-control" required>
+      {% for f in fundraisers %}
+      <option value="{{ f[0] }}">{{ f[1] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Payout Date</label>
+    <input type="datetime-local" name="payout_date" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Amount Released</label>
+    <input type="number" name="amount_released" class="form-control" required>
+  </div>
+  <button type="submit" class="btn btn-success">Add</button>
+</form>
+{% endblock %}
