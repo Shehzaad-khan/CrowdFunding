@@ -9,7 +9,7 @@ class Database:
     def __init__(self):
         self.host = os.getenv('DB_HOST', 'localhost')
         self.user = os.getenv('DB_USER', 'root')
-        self.password = os.getenv('DB_PASSWORD', 'Shiva@12345')
+        self.password = os.getenv('DB_PASSWORD', 'Your Password')
         self.database = os.getenv('DB_NAME', 'CrowdfundingDB')
         
     def get_connection(self):
