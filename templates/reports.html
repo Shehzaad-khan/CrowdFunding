@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-bar-chart"></i> Reports & Analytics</h1>
+    </div>
+</div>
+
+<!-- Platform Statistics -->
+{% if platform_stats %}
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">📊 Platform Statistics</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-2">
+                <h6 class="text-muted">Administrators</h6>
+                <h3>{{ platform_stats.Total_Administrators }}</h3>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted">Donors</h6>
+                <h3 class="text-info">{{ platform_stats.Total_Donors }}</h3>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted">Fundraisers</h6>
+                <h3 class="text-primary">{{ platform_stats.Total_Fundraisers }}</h3>
+                <small class="text-muted">{{ platform_stats.Active_Fundraisers }} active</small>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted">Transactions</h6>
+                <h3 class="text-success">{{ platform_stats.Total_Transactions }}</h3>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted">Total Commission</h6>
+                <h3 class="text-warning">₹{{ "{:,.0f}".format(platform_stats.Total_Commission) }}</h3>
+            </div>
+            <div class="col-md-2">
+                <h6 class="text-muted">Total Visits</h6>
+                <h3>{{ platform_stats.Total_Visits }}</h3>
+                <small class="text-muted">{{ platform_stats.Unique_Visitors }} unique</small>
+            </div>
+        </div>
+        <hr>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <h6 class="text-muted">Gross Amount</h6>
+                <h4>₹{{ "{:,.2f}".format(platform_stats.Total_Gross_Amount) }}</h4>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Platform Fee (1%)</h6>
+                <h4 class="text-warning">₹{{ "{:,.2f}".format(platform_stats.Total_Commission) }}</h4>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Net to Fundraisers</h6>
+                <h4 class="text-success">₹{{ "{:,.2f}".format(platform_stats.Total_Net_Amount) }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-trophy"></i> Top Donors</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Name</th>
+                                <th>Total Donated</th>
+                                <th>Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donor in top_donors %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><a href="{{ url_for('donor_details', donor_id=donor.donor_id) }}">{{ donor.dname }}</a></td>
+                                <td>₹{{ "{:,.2f}".format(donor.total_donated) }}</td>
+                                <td>{{ donor.transaction_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Fundraiser Progress</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Progress</th>
+                                <th>Status</th>
+                                <th>Days Left</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fundraiser in fundraiser_progress %}
+                            <tr>
+                                <td><a href="{{ url_for('fundraiser_details', fundraiser_no=fundraiser.fundraiser_no) }}">{{ fundraiser.title[:30] }}...</a></td>
+                                <td>
+                                    <div class="progress" style="min-width: 100px;">
+                                        <div class="progress-bar" style="width: {{ fundraiser.progress }}%">{{ fundraiser.progress }}%</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-{{ 'success' if fundraiser.status == 'Active' else 'info' }}">{{ fundraiser.status }}</span></td>
+                                <td>{{ fundraiser.days_remaining if fundraiser.days_remaining > 0 else 'Expired' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- High Interest Donors (Ready to Donate) -->
+{% if high_interest_donors %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">🔥 High Interest Donors (5+ Visits - Ready to Donate!)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Donor</th>
+                                <th>Email</th>
+                                <th>Fundraiser</th>
+                                <th>Total Visits</th>
+                                <th>Interest Level</th>
+                                <th>Last Visit</th>
+                                <th>Total Donated</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in high_interest_donors %}
+                            <tr>
+                                <td><a href="{{ url_for('donor_details', donor_id=item.donor_id) }}">{{ item.donor_name }}</a></td>
+                                <td>{{ item.donor_email }}</td>
+                                <td><a href="{{ url_for('fundraiser_details', fundraiser_no=item.fundraiser_no) }}">{{ item.fundraiser_title[:30] }}...</a></td>
+                                <td><span class="badge bg-danger">{{ item.total_visits }} visits</span></td>
+                                <td>
+                                    {% if item.interest_level == 'Very High' %}
+                                        <span class="badge bg-danger">🔴 Very High</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">🟠 High</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.last_visit.strftime('%Y-%m-%d') if item.last_visit else 'N/A' }}</td>
+                                <td>₹{{ "{:,.2f}".format(item.total_donated or 0) }}</td>
+                                <td>
+                                    <a href="{{ url_for('add_transaction') }}?donor_id={{ item.donor_id }}&fundraiser_no={{ item.fundraiser_no }}" 
+                                       class="btn btn-sm btn-success">
+                                        💰 Encourage Donation
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

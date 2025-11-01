@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Earnings{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-currency-dollar"></i> Administrator Earnings</h1>
+        <p class="text-muted">{{ admin.name }} ({{ admin.email }})</p>
+    </div>
+    <div class="col text-end">
+        <a href="{{ url_for('administrators') }}" class="btn btn-secondary">Back to Administrators</a>
+    </div>
+</div>
+
+<!-- Earnings Summary Cards -->
+{% if earnings %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Total Commission Earned</h6>
+                <h2 class="text-success">₹{{ "{:,.2f}".format(earnings.Total_Commission_Earned or 0) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Total Fundraisers</h6>
+                <h2 class="text-primary">{{ earnings.Total_Fundraisers or 0 }}</h2>
+                <small class="text-muted">{{ earnings.Active_Fundraisers or 0 }} active</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Total Funds Raised</h6>
+                <h2 class="text-info">₹{{ "{:,.2f}".format(earnings.Total_Funds_Raised or 0) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted">Total Payouts</h6>
+                <h2 class="text-warning">{{ earnings.Total_Payouts or 0 }}</h2>
+                <small class="text-muted">{{ earnings.Total_Transactions or 0 }} transactions</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payroll History -->
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">⚡ Auto-Generated Payroll History</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Payroll ID</th>
+                        <th>Fundraiser</th>
+                        <th>Transaction ID</th>
+                        <th>Net Amount Released</th>
+                        <th>Commission Earned</th>
+                        <th>Payout Date</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payroll in payrolls %}
+                    <tr>
+                        <td>{{ payroll.Payroll_id }}</td>
+                        <td>{{ payroll.fundraiser_title }}</td>
+                        <td>
+                            {% if payroll.Transaction_id %}
+                                <span class="badge bg-info">#{{ payroll.Transaction_id }}</span>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="text-success">₹{{ "{:,.2f}".format(payroll.amount_released) }}</td>
+                        <td class="text-warning"><strong>₹{{ "{:,.2f}".format(payroll.commission_amount) }}</strong></td>
+                        <td>{{ payroll.payout_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td><span class="badge bg-primary">⚡ {{ payroll.payout_type }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No payroll entries yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

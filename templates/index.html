@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Crowdfunding System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Fundraisers</h6>
+                <div class="stat-value">{{ stats.total_fundraisers }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Active Fundraisers</h6>
+                <div class="stat-value text-success">{{ stats.active_fundraisers }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Donors</h6>
+                <div class="stat-value text-info">{{ stats.total_donors }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Raised</h6>
+                <div class="stat-value text-warning">₹{{ "{:,.2f}".format(stats.total_raised) }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Transactions</h6>
+                <div class="stat-value">{{ stats.total_transactions }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Commission (1%)</h6>
+                <div class="stat-value text-warning">₹{{ "{:,.2f}".format(stats.total_commission or 0) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Visits</h6>
+                <div class="stat-value text-info">{{ stats.total_visits or 0 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total Goal Amount</h6>
+                <div class="stat-value">₹{{ "{:,.2f}".format(stats.total_goal) }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Donor</th>
+                                <th>Fundraiser</th>
+                                <th>Gross</th>
+                                <th>Commission</th>
+                                <th>Net</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in recent_transactions %}
+                            <tr>
+                                <td>{{ trans.donor_name }}</td>
+                                <td>{{ trans.fundraiser_title[:25] }}...</td>
+                                <td>₹{{ "{:,.0f}".format(trans.amount) }}</td>
+                                <td class="text-warning">₹{{ "{:,.0f}".format(trans.admin_commission) }}</td>
+                                <td class="text-success">₹{{ "{:,.0f}".format(trans.net_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-trophy"></i> Top Fundraisers</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Progress</th>
+                                <th>Raised</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fundraiser in top_fundraisers %}
+                            <tr>
+                                <td><a href="{{ url_for('fundraiser_details', fundraiser_no=fundraiser.fundraiser_no) }}">{{ fundraiser.title[:30] }}...</a></td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ fundraiser.progress }}%">
+                                            {{ fundraiser.progress }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>₹{{ "{:,.0f}".format(fundraiser.raised_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

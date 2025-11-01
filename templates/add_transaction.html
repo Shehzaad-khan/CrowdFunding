@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Add Transaction{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card transaction-card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Record Donation</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="donor_id" class="form-label">Donor</label>
+                        <select class="form-control" id="donor_id" name="donor_id" required>
+                            <option value="">Select Donor</option>
+                            {% for donor in donors %}
+                            <option value="{{ donor.donor_id }}">{{ donor.dname }} ({{ donor.demail }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fundraiser_no" class="form-label">
+                                Fundraiser 
+                                <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="Select an active fundraiser to donate to"></i>
+                            </label>
+                            <select class="form-control" id="fundraiser_no" name="fundraiser_no" required onchange="updateFundraiserInfo()">
+                                <option value="">Select Fundraiser</option>
+                                {% for fundraiser in fundraisers %}
+                                <option value="{{ fundraiser.fundraiser_no }}" 
+                                        data-remaining="{{ fundraiser.remaining_amount }}"
+                                        data-status="{{ fundraiser.status }}">
+                                    {{ fundraiser.title }} (Remaining: ₹{{ "{:,.0f}".format(fundraiser.remaining_amount) }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div id="fundraiser-info" class="mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">Donation Amount (₹)</label>
+                            <input type="number" step="0.01" class="form-control" id="amount" name="amount" required oninput="calculateCommission()">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="payment_mode" class="form-label">Payment Mode</label>
+                            <select class="form-control" id="payment_mode" name="payment_mode" required>
+                                <option value="UPI">UPI</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Debit Card">Debit Card</option>
+                                <option value="Net Banking">Net Banking</option>
+                                <option value="Cash">Cash</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Commission Breakdown Preview -->
+                    <div class="alert alert-info mb-3" id="commission-preview" style="display: none;">
+                        <h6 class="mb-2"><strong>💰 Donation Breakdown</strong></h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small class="text-muted">You're donating:</small><br>
+                                <strong class="text-primary">₹<span id="gross-amount">0.00</span></strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted">Platform fee (1%):</small><br>
+                                <strong class="text-warning">₹<span id="commission-amount">0.00</span></strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted">To fundraiser:</small><br>
+                                <strong class="text-success">₹<span id="net-amount">0.00</span></strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('transactions') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Record Transaction</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+let selectedFundraiserRemaining = 0;
+
+function updateFundraiserInfo() {
+    const select = document.getElementById('fundraiser_no');
+    const option = select.options[select.selectedIndex];
+    const infoDiv = document.getElementById('fundraiser-info');
+    
+    if (option.value) {
+        selectedFundraiserRemaining = parseFloat(option.dataset.remaining) || 0;
+        const status = option.dataset.status;
+        
+        if (status !== 'Active') {
+            infoDiv.innerHTML = '<div class="alert alert-warning">⚠️ This fundraiser is not active and cannot accept donations.</div>';
+        } else {
+            infoDiv.innerHTML = `<div class="alert alert-success">✅ Active fundraiser. Remaining to reach goal: ₹${selectedFundraiserRemaining.toLocaleString()}</div>`;
+        }
+    } else {
+        infoDiv.innerHTML = '';
+        selectedFundraiserRemaining = 0;
+    }
+    calculateCommission(); // Recalculate when fundraiser changes
+}
+
+function calculateCommission() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const commission = Math.round(amount * 0.01 * 100) / 100;
+    const netAmount = Math.round((amount - commission) * 100) / 100;
+    
+    if (amount > 0) {
+        document.getElementById('gross-amount').textContent = amount.toFixed(2);
+        document.getElementById('commission-amount').textContent = commission.toFixed(2);
+        document.getElementById('net-amount').textContent = netAmount.toFixed(2);
+        document.getElementById('commission-preview').style.display = 'block';
+        
+        // Validate against remaining amount
+        if (selectedFundraiserRemaining > 0 && netAmount > selectedFundraiserRemaining) {
+            document.getElementById('commission-preview').classList.remove('alert-info');
+            document.getElementById('commission-preview').classList.add('alert-danger');
+            document.getElementById('commission-preview').innerHTML += 
+                '<div class="mt-2"><strong>❌ Error:</strong> Net amount (₹' + netAmount.toFixed(2) + 
+                ') exceeds remaining goal amount (₹' + selectedFundraiserRemaining.toLocaleString() + ')</div>';
+        } else {
+            document.getElementById('commission-preview').classList.remove('alert-danger');
+            document.getElementById('commission-preview').classList.add('alert-info');
+        }
+    } else {
+        document.getElementById('commission-preview').style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

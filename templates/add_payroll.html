@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Process Payroll{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Process Payroll</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="admin_id" class="form-label">Administrator</label>
+                        <select class="form-control" id="admin_id" name="admin_id" required>
+                            {% for admin in admins %}
+                            <option value="{{ admin.Admin_id }}">{{ admin.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fundraiser_no" class="form-label">Fundraiser</label>
+                        <select class="form-control" id="fundraiser_no" name="fundraiser_no" required>
+                            {% for fundraiser in fundraisers %}
+                            <option value="{{ fundraiser.fundraiser_no }}">{{ fundraiser.title }} (Raised: ₹{{ fundraiser.raised_amount }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount_released" class="form-label">Amount to Release (₹)</label>
+                        <input type="number" step="0.01" class="form-control" id="amount_released" name="amount_released" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payout_date" class="form-label">Payout Date & Time</label>
+                        <input type="datetime-local" class="form-control" id="payout_date" name="payout_date" required>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('payroll') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Process Payroll</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

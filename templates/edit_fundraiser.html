@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Fundraiser{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card fundraiser-card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Edit Fundraiser</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ fundraiser.title }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fundraiser_owner_name" class="form-label">Owner Name</label>
+                            <input type="text" class="form-control" id="fundraiser_owner_name" name="fundraiser_owner_name" value="{{ fundraiser.fundraiser_owner_name }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required>{{ fundraiser.description }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="goal_amount" class="form-label">Goal Amount (₹)</label>
+                            <input type="number" step="0.01" class="form-control" id="goal_amount" name="goal_amount" value="{{ fundraiser.goal_amount }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="deadline" class="form-label">Deadline</label>
+                            <input type="date" class="form-control" id="deadline" name="deadline" value="{{ fundraiser.deadline }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-control" id="status" name="status" required>
+                                <option value="Planned" {% if fundraiser.status == 'Planned' %}selected{% endif %}>Planned</option>
+                                <option value="Active" {% if fundraiser.status == 'Active' %}selected{% endif %}>Active</option>
+                                <option value="Completed" {% if fundraiser.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                <option value="Closed" {% if fundraiser.status == 'Closed' %}selected{% endif %}>Closed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('fundraisers') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-warning">Update Fundraiser</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Visit{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil"></i> Edit Visit</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p><strong>Donor:</strong> {{ visit.donor_name }}</p>
+                    <p><strong>Fundraiser:</strong> {{ visit.fundraiser_title }}</p>
+                    <p><strong>Visit Date:</strong> {{ visit.visit_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+                <hr>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="duration" name="duration" value="{{ visit.duration }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="interest_level" class="form-label">Interest Level</label>
+                        <select class="form-control" id="interest_level" name="interest_level" required>
+                            <option value="High" {% if visit.interest_level == 'High' %}selected{% endif %}>High</option>
+                            <option value="Medium" {% if visit.interest_level == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="Low" {% if visit.interest_level == 'Low' %}selected{% endif %}>Low</option>
+                        </select>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('visits') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-warning">Update Visit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

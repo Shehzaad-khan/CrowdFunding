@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Donor Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-person-circle"></i> Donor Details</h1>
+    </div>
+    <div class="col text-end">
+        <a href="{{ url_for('donors') }}" class="btn btn-secondary">Back to Donors</a>
+    </div>
+</div>
+
+<div class="card donor-card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5 class="card-title">{{ donor.dname }}</h5>
+                <p><strong>Email:</strong> {{ donor.demail }}</p>
+                <p><strong>Phone:</strong> {{ donor.dphone if donor.dphone else 'N/A' }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <h6 class="text-muted">Total Donated</h6>
+                <h3 class="text-success">₹{{ "{:,.2f}".format(donor.total_donated or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interest Analytics Section -->
+{% if analytics %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">📊 Interest Level Analytics</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Fundraiser</th>
+                        <th>Total Visits</th>
+                        <th>Interest Level</th>
+                        <th>Total Donated</th>
+                        <th>Engagement Status</th>
+                        <th>Last Visit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in analytics %}
+                    <tr>
+                        <td><a href="{{ url_for('fundraiser_details', fundraiser_no=item.fundraiser_no) }}">{{ item.title }}</a></td>
+                        <td><span class="badge bg-info">{{ item.total_visits }} visits</span></td>
+                        <td>
+                            {% if item.interest_level == 'Very High' %}
+                                <span class="badge bg-danger">🔴 Very High</span>
+                            {% elif item.interest_level == 'High' %}
+                                <span class="badge bg-warning">🟠 High</span>
+                            {% elif item.interest_level == 'Medium' %}
+                                <span class="badge bg-info">🟡 Medium</span>
+                            {% else %}
+                                <span class="badge bg-secondary">⚪ Low</span>
+                            {% endif %}
+                        </td>
+                        <td>₹{{ "{:,.2f}".format(item.total_donated) }}</td>
+                        <td><small>{{ item.engagement_status }}</small></td>
+                        <td>{{ item.last_visit.strftime('%Y-%m-%d') if item.last_visit else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Transactions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fundraiser</th>
+                                <th>Amount</th>
+                                <th>Mode</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in transactions %}
+                            <tr>
+                                <td>{{ trans.fundraiser_title[:20] }}...</td>
+                                <td>₹{{ "{:,.2f}".format(trans.amount) }}</td>
+                                <td>{{ trans.payment_mode }}</td>
+                                <td>{{ trans.transaction_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Visits</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fundraiser</th>
+                                <th>Duration</th>
+                                <th>Interest</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visit in visits %}
+                            <tr>
+                                <td>{{ visit.fundraiser_title[:20] }}...</td>
+                                <td>{{ visit.duration }} min</td>
+                                <td>
+                                    <span class="badge bg-{% if visit.interest_level == 'Very High' %}danger{% elif visit.interest_level == 'High' %}warning{% elif visit.interest_level == 'Medium' %}info{% else %}secondary{% endif %}">
+                                        {% if visit.interest_level == 'Very High' %}🔴{% elif visit.interest_level == 'High' %}🟠{% elif visit.interest_level == 'Medium' %}🟡{% else %}⚪{% endif %}
+                                        {{ visit.interest_level }}
+                                    </span>
+                                </td>
+                                <td>{{ visit.visit_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

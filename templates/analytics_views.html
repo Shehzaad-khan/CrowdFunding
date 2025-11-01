@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-graph-up-arrow"></i> Advanced Analytics Dashboard</h1>
+        <p class="text-muted">Database views for comprehensive reporting</p>
+    </div>
+</div>
+
+<!-- Active Fundraisers View -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">🎯 Active Fundraisers (vw_active_fundraisers)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Goal</th>
+                        <th>Raised</th>
+                        <th>Remaining</th>
+                        <th>Progress</th>
+                        <th>Transactions</th>
+                        <th>Visits</th>
+                        <th>Days Left</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in active_fundraisers %}
+                    <tr>
+                        <td>{{ f.fundraiser_no }}</td>
+                        <td><a href="{{ url_for('fundraiser_details', fundraiser_no=f.fundraiser_no) }}">{{ f.title[:30] }}...</a></td>
+                        <td>₹{{ "{:,.0f}".format(f.goal_amount or 0) }}</td>
+                        <td class="text-success">₹{{ "{:,.0f}".format(f.raised_amount or 0) }}</td>
+                        <td class="text-warning">₹{{ "{:,.0f}".format(f.remaining_amount or 0) }}</td>
+                        <td>
+                            <div class="progress" style="min-width: 100px;">
+                                <div class="progress-bar bg-success" style="width: {{ f.completion_percentage or 0 }}%">
+                                    {{ f.completion_percentage or 0 }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-info">{{ f.total_transactions or 0 }}</span></td>
+                        <td><span class="badge bg-primary">{{ f.total_visits or 0 }}</span></td>
+                        <td>{{ f.days_remaining or 0 }} days</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">No active fundraisers</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Summary View -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">💰 Transaction Summary (vw_transaction_summary)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Donor</th>
+                        <th>Fundraiser</th>
+                        <th>Gross</th>
+                        <th>Commission</th>
+                        <th>Net</th>
+                        <th>Payment</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transaction_summary[:20] %}
+                    <tr>
+                        <td><a href="{{ url_for('transaction_details', transaction_id=t.Transaction_id) }}">#{{ t.Transaction_id }}</a></td>
+                        <td>{{ t.donor_name }}</td>
+                        <td>{{ t.fundraiser_title[:25] }}...</td>
+                        <td>₹{{ "{:,.0f}".format(t.gross_amount or 0) }}</td>
+                        <td class="text-warning">₹{{ "{:,.0f}".format(t.commission_amount or 0) }}</td>
+                        <td class="text-success">₹{{ "{:,.0f}".format(t.net_amount or 0) }}</td>
+                        <td><span class="badge bg-info">{{ t.payment_mode }}</span></td>
+                        <td>{{ t.transaction_date.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No transactions</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if transaction_summary|length > 20 %}
+            <p class="text-muted text-center">Showing 20 of {{ transaction_summary|length }} transactions</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Donor Engagement View -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">👥 Donor Engagement (vw_donor_engagement)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Donor</th>
+                        <th>Email</th>
+                        <th>Total Donated</th>
+                        <th>Transactions</th>
+                        <th>Fundraisers Visited</th>
+                        <th>Total Visits</th>
+                        <th>Avg Interest</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in donor_engagement %}
+                    <tr>
+                        <td><a href="{{ url_for('donor_details', donor_id=d.donor_id) }}">{{ d.donor_name }}</a></td>
+                        <td>{{ d.donor_email }}</td>
+                        <td class="text-success"><strong>₹{{ "{:,.2f}".format(d.total_donated or 0) }}</strong></td>
+                        <td><span class="badge bg-success">{{ d.transaction_count or 0 }}</span></td>
+                        <td><span class="badge bg-primary">{{ d.fundraisers_visited or 0 }}</span></td>
+                        <td><span class="badge bg-info">{{ d.total_visits or 0 }}</span></td>
+                        <td>{{ d.avg_interest_level }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No donor data</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Administrator Dashboard View -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-white">
+        <h5 class="mb-0">🛡️ Administrator Dashboard (vw_administrator_dashboard)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Admin</th>
+                        <th>Email</th>
+                        <th>Total Commission</th>
+                        <th>Fundraisers</th>
+                        <th>Active</th>
+                        <th>Total Raised</th>
+                        <th>Transactions</th>
+                        <th>Payouts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in admin_dashboard %}
+                    <tr>
+                        <td>{{ a.admin_name }}</td>
+                        <td>{{ a.email }}</td>
+                        <td class="text-success"><strong>₹{{ "{:,.2f}".format(a.total_commission_earned or 0) }}</strong></td>
+                        <td><span class="badge bg-primary">{{ a.total_fundraisers or 0 }}</span></td>
+                        <td><span class="badge bg-success">{{ a.active_fundraisers or 0 }}</span></td>
+                        <td>₹{{ "{:,.0f}".format(a.total_funds_raised or 0) }}</td>
+                        <td><span class="badge bg-info">{{ a.total_transactions or 0 }}</span></td>
+                        <td><span class="badge bg-warning">{{ a.total_payouts or 0 }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No administrator data</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>ℹ️ About Database Views:</strong> These are pre-configured database views that provide optimized queries for reporting and analytics. They automatically update when underlying data changes.
+</div>
+
+{% endblock %}

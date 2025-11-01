@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-receipt"></i> Transaction Details</h1>
+        <p class="text-muted">Transaction #{{ transaction.Transaction_id if transaction else 'N/A' }}</p>
+    </div>
+    <div class="col text-end">
+        <a href="{{ url_for('transactions') }}" class="btn btn-secondary">Back to Transactions</a>
+    </div>
+</div>
+
+{% if transaction %}
+<div class="row">
+    <!-- Transaction Information -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">💰 Transaction Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Transaction ID:</th>
+                        <td><strong>#{{ transaction.Transaction_id }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Date & Time:</th>
+                        <td>{{ transaction.transaction_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Mode:</th>
+                        <td><span class="badge bg-info">{{ transaction.payment_mode }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td><span class="badge bg-secondary">🔒 IMMUTABLE</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Breakdown -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0">💵 Financial Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Gross Amount:</th>
+                        <td class="text-primary"><h4>₹{{ "{:,.2f}".format(transaction.Gross_Amount) }}</h4></td>
+                    </tr>
+                    <tr>
+                        <th>Platform Commission (1%):</th>
+                        <td class="text-warning"><h5>- ₹{{ "{:,.2f}".format(transaction.Commission_Amount) }}</h5></td>
+                    </tr>
+                    <tr style="border-top: 2px solid #000;">
+                        <th>Net to Fundraiser:</th>
+                        <td class="text-success"><h4>₹{{ "{:,.2f}".format(transaction.Net_Amount) }}</h4></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Donor Information -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">👤 Donor Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Name:</th>
+                        <td><a href="{{ url_for('donor_details', donor_id=transaction.donor_id) }}">{{ transaction.Donor_Name }}</a></td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ transaction.Donor_Email }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fundraiser Information -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">🎯 Fundraiser Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Title:</th>
+                        <td><a href="{{ url_for('fundraiser_details', fundraiser_no=transaction.fundraiser_no) }}">{{ transaction.Fundraiser_Title }}</a></td>
+                    </tr>
+                    <tr>
+                        <th>Owner:</th>
+                        <td>{{ transaction.Fundraiser_Owner }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Information -->
+{% if transaction.Payroll_id %}
+<div class="card">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">⚡ Auto-Generated Payroll</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <h6 class="text-muted">Payroll ID</h6>
+                <h4>#{{ transaction.Payroll_id }}</h4>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Administrator</h6>
+                <h4>{{ transaction.Administrator_Name }}</h4>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Commission Released</h6>
+                <h4 class="text-success">₹{{ "{:,.2f}".format(transaction.Amount_Released_To_Admin) }}</h4>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Payout Date</h6>
+                <h4>{{ transaction.payout_date.strftime('%Y-%m-%d') if transaction.payout_date else 'Pending' }}</h4>
+            </div>
+        </div>
+        <div class="alert alert-info mt-3 mb-0">
+            <strong>ℹ️ Note:</strong> This payroll entry was automatically generated when the donation was processed. The administrator receives the 1% platform commission.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-warning">
+    <strong>⚠️ Transaction not found!</strong> The requested transaction does not exist.
+</div>
+{% endif %}
+
+{% endblock %}

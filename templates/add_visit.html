@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Record Visit{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Record Visit</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="donor_id" class="form-label">Donor</label>
+                        <select class="form-control" id="donor_id" name="donor_id" required>
+                            {% for donor in donors %}
+                            <option value="{{ donor.donor_id }}">{{ donor.dname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fundraiser_no" class="form-label">Fundraiser</label>
+                        <select class="form-control" id="fundraiser_no" name="fundraiser_no" required>
+                            {% for fundraiser in fundraisers %}
+                            <option value="{{ fundraiser.fundraiser_no }}">{{ fundraiser.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="interest_level" class="form-label">Interest Level</label>
+                            <select class="form-control" id="interest_level" name="interest_level" required>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="visit_date" class="form-label">Visit Date & Time</label>
+                        <input type="datetime-local" class="form-control" id="visit_date" name="visit_date" required>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('visits') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Record Visit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

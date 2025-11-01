@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Fundraiser Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1><i class="bi bi-megaphone-fill"></i> {{ fundraiser.title }}</h1>
+        {% if summary %}
+        <p class="text-muted">
+            👁 {{ summary.Total_Visits or 0 }} total visits | 
+            👥 {{ summary.Unique_Visitors or 0 }} unique visitors | 
+            📅 {{ summary.days_remaining or 0 }} days remaining
+        </p>
+        {% endif %}
+    </div>
+    <div class="col text-end">
+        <a href="{{ url_for('fundraiser_audit', fundraiser_no=fundraiser.fundraiser_no) }}" class="btn btn-info me-2">
+            <i class="bi bi-file-earmark-text"></i> Audit Trail
+        </a>
+        <a href="{{ url_for('fundraisers') }}" class="btn btn-secondary">Back to Fundraisers</a>
+    </div>
+</div>
+
+<!-- Visitor Engagement Alert -->
+{% if session.get('donor_id') %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <strong>👋 Welcome back!</strong> You've visited this fundraiser before. Your interest level helps us understand donor engagement.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card fundraiser-card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Description</h5>
+                <p class="card-text">{{ fundraiser.description }}</p>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Owner:</strong> {{ fundraiser.fundraiser_owner_name }}</p>
+                        <p><strong>Administrator:</strong> {{ fundraiser.admin_name }}</p>
+                        <p><strong>Bank Details:</strong> {{ fundraiser.bank_details }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong> <span class="badge bg-success">{{ fundraiser.status }}</span></p>
+                        <p><strong>Deadline:</strong> {{ fundraiser.deadline.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card fundraiser-card mb-4">
+            <div class="card-body text-center">
+                <h5>Fundraising Progress</h5>
+                <h2 class="text-success">₹{{ "{:,.2f}".format(fundraiser.raised_amount) }}</h2>
+                <p class="text-muted">of ₹{{ "{:,.2f}".format(fundraiser.goal_amount) }}</p>
+                <div class="progress mb-3" style="height: 30px;">
+                    <div class="progress-bar bg-success" style="width: {{ (fundraiser.raised_amount / fundraiser.goal_amount * 100)|round }}%">
+                        {{ (fundraiser.raised_amount / fundraiser.goal_amount * 100)|round }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Donations</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Donor</th>
+                                <th>Amount</th>
+                                <th>Mode</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in transactions %}
+                            <tr>
+                                <td>{{ trans.donor_name }}</td>
+                                <td>₹{{ "{:,.2f}".format(trans.amount) }}</td>
+                                <td>{{ trans.payment_mode }}</td>
+                                <td>{{ trans.transaction_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Payroll Releases</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Admin</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll in payrolls %}
+                            <tr>
+                                <td>{{ payroll.admin_name }}</td>
+                                <td>₹{{ "{:,.2f}".format(payroll.amount_released) }}</td>
+                                <td>{{ payroll.payout_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Visitor Activity</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Donor</th>
+                        <th>Duration</th>
+                        <th>Interest Level</th>
+                        <th>Visit Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in visits %}
+                    <tr>
+                        <td>{{ visit.donor_name }}</td>
+                        <td>{{ visit.duration }} min</td>
+                        <td>
+                            <span class="badge bg-{% if visit.interest_level == 'Very High' %}danger{% elif visit.interest_level == 'High' %}warning{% elif visit.interest_level == 'Medium' %}info{% else %}secondary{% endif %}">
+                                {% if visit.interest_level == 'Very High' %}🔴{% elif visit.interest_level == 'High' %}🟠{% elif visit.interest_level == 'Medium' %}🟡{% else %}⚪{% endif %}
+                                {{ visit.interest_level }}
+                            </span>
+                        </td>
+                        <td>{{ visit.visit_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// Visit Timer - Track time spent on fundraiser page
+let visitStartTime = Date.now();
+const donorId = {{ session.get('donor_id', 'null') }};  // Get from session if available
+const fundraiserId = {{ fundraiser.fundraiser_no }};
+
+// Record visit duration when user leaves page
+window.addEventListener('beforeunload', function() {
+    if (donorId) {
+        const duration = Math.floor((Date.now() - visitStartTime) / 60000); // Convert to minutes
+        if (duration > 0) {
+            // Use sendBeacon for reliable tracking even when page is closing
+            const data = new FormData();
+            data.append('donor_id', donorId);
+            data.append('fundraiser_no', fundraiserId);
+            data.append('duration', duration);
+            navigator.sendBeacon('{{ url_for("record_visit") }}', data);
+        }
+    }
+});
+
+// Helper functions for client-side calculations
+function calculateCommission(amount) {
+    return Math.round(amount * 0.01 * 100) / 100;
+}
+
+function calculateNetAmount(amount) {
+    return Math.round((amount - calculateCommission(amount)) * 100) / 100;
+}
+
+function determineInterestLevel(visitCount) {
+    if (visitCount >= 10) return 'Very High';
+    if (visitCount >= 5) return 'High';
+    if (visitCount >= 3) return 'Medium';
+    return 'Low';
+}
+
+function getInterestLevelBadge(level) {
+    const badges = {
+        'Very High': '<span class="badge bg-danger">🔴 Very High</span>',
+        'High': '<span class="badge bg-warning">🟠 High</span>',
+        'Medium': '<span class="badge bg-warning">🟡 Medium</span>',
+        'Low': '<span class="badge bg-secondary">⚪ Low</span>'
+    };
+    return badges[level] || badges['Low'];
+}
+</script>
+{% endblock %}
