@@ -984,7 +984,8 @@ END //
 CREATE PROCEDURE ViewVisitHistory(IN p_fundraiser_no INT)
 BEGIN
     SELECT 
-        v.visit_id, 
+        v.visit_id,
+        v.donor_id,
         d.dname AS donor_name, 
         v.visit_date, 
         v.duration, 
@@ -995,7 +996,7 @@ BEGIN
     JOIN Donor d ON v.donor_id = d.donor_id
     WHERE v.fundraiser_no = p_fundraiser_no
     ORDER BY v.visit_date DESC;
-END //
+END //
 
 -- View visit history for a donor
 CREATE PROCEDURE ViewDonorVisits(IN p_donor_id INT)
