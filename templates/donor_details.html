@@ -28,6 +28,58 @@
     </div>
 </div>
 
+<!-- Available Fundraisers Section -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">🎯 Explore Active Fundraisers</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Click on any fundraiser below to visit and explore. Your visits help us track your interests!</p>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Fundraiser</th>
+                        <th>Goal Amount</th>
+                        <th>Raised</th>
+                        <th>Progress</th>
+                        <th>Deadline</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fundraiser in available_fundraisers %}
+                    <tr>
+                        <td>
+                            <strong>{{ fundraiser.title }}</strong><br>
+                            <small class="text-muted">{{ fundraiser.description[:60] }}...</small>
+                        </td>
+                        <td>₹{{ "{:,.2f}".format(fundraiser.goal_amount) }}</td>
+                        <td>₹{{ "{:,.2f}".format(fundraiser.raised_amount) }}</td>
+                        <td>
+                            <div class="progress" style="height: 20px; width: 100px;">
+                                <div class="progress-bar bg-success" style="width: {{ fundraiser.progress }}%">
+                                    {{ fundraiser.progress }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ fundraiser.deadline.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary visit-fundraiser-btn" 
+                                    data-donor-id="{{ donor.donor_id }}" 
+                                    data-fundraiser-no="{{ fundraiser.fundraiser_no }}"
+                                    data-fundraiser-title="{{ fundraiser.title }}">
+                                <i class="bi bi-eye"></i> Visit
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- Interest Analytics Section -->
 {% if analytics %}
 <div class="card mb-4">
@@ -145,4 +197,64 @@
         </div>
     </div>
 </div>
+
+<script>
+// Handle visit recording when donor clicks "Visit" button
+document.querySelectorAll('.visit-fundraiser-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const donorId = this.getAttribute('data-donor-id');
+        const fundraiserNo = this.getAttribute('data-fundraiser-no');
+        const fundraiserTitle = this.getAttribute('data-fundraiser-title');
+        
+        // Disable button to prevent double clicks
+        this.disabled = true;
+        this.innerHTML = '<i class="bi bi-hourglass-split"></i> Recording...';
+        
+        // Record visit via AJAX
+        fetch('{{ url_for("record_visit") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'donor_id': donorId,
+                'fundraiser_no': fundraiserNo,
+                'duration': 5  // Default 5 minutes for manual visit
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                alertDiv.innerHTML = `
+                    <strong>✓ Visit Recorded!</strong><br>
+                    Your visit to "${fundraiserTitle}" has been logged.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(alertDiv);
+                
+                // Redirect to fundraiser details page after 1.5 seconds
+                setTimeout(() => {
+                    window.location.href = '/fundraisers/' + fundraiserNo + '?donor_id=' + donorId;
+                }, 1500);
+            } else {
+                alert('Error recording visit: ' + data.message);
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-eye"></i> Visit';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to record visit. Please try again.');
+            // Re-enable button
+            this.disabled = false;
+            this.innerHTML = '<i class="bi bi-eye"></i> Visit';
+        });
+    });
+});
+</script>
 {% endblock %}
