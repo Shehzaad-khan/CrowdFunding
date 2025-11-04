@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from database import Database
 from datetime import datetime
 import os
@@ -124,7 +124,17 @@ def donor_details(donor_id):
     transactions = db.get_donor_transactions(donor_id)
     visits = db.get_donor_visits(donor_id)
     analytics = db.get_donor_interest_analytics(donor_id)
-    return render_template('donor_details.html', donor=donor, transactions=transactions, visits=visits, analytics=analytics)
+    # Get all active fundraisers for the donor to explore
+    available_fundraisers = db.fetch_all(
+        """SELECT f.fundraiser_no, f.title, f.description, f.goal_amount, f.raised_amount, 
+                  f.deadline, f.status, 
+                  ROUND((f.raised_amount / f.goal_amount * 100), 2) as progress
+           FROM Fundraiser f
+           WHERE f.status = 'Active'
+           ORDER BY f.deadline ASC"""
+    )
+    return render_template('donor_details.html', donor=donor, transactions=transactions, 
+                         visits=visits, analytics=analytics, available_fundraisers=available_fundraisers)
 
 @app.route('/fundraisers')
 def fundraisers():
@@ -246,7 +256,7 @@ def visits():
     visits_list = db.get_all_visits()
     return render_template('visits.html', visits=visits_list)
 
-@app.route('/visits/record', methods=['POST'])
+@app.route('/record_visit', methods=['POST'])
 def record_visit():
     """API endpoint to record visits via AJAX"""
     donor_id = request.form.get('donor_id', type=int)
@@ -256,10 +266,10 @@ def record_visit():
     if donor_id and fundraiser_no:
         result = db.record_fundraiser_visit(donor_id, fundraiser_no, duration)
         if result['success']:
-            return {'success': True, 'data': result.get('data', {})}
+            return jsonify({'success': True, 'data': result.get('data', {})})
         else:
-            return {'success': False, 'message': result.get('message', 'Failed to record visit')}
-    return {'success': False, 'message': 'Missing parameters'}
+            return jsonify({'success': False, 'message': result.get('message', 'Failed to record visit')})
+    return jsonify({'success': False, 'message': 'Missing parameters'})
 
 @app.route('/reports')
 def reports():
