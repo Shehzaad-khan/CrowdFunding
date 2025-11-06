@@ -225,7 +225,7 @@ def add_transaction():
         if result['success']:
             if 'data' in result:
                 data = result['data']
-                flash(f'Donation processed successfully! Commission: ₹{data.get("Commission_1_Percent", 0):.2f}, Net to fundraiser: ₹{data.get("Net_To_Fundraiser", 0):.2f}', 'success')
+                flash(f'Donation processed successfully! Platform fee: ₹{data.get("Platform_Fee_1_Percent", 0):.2f} | Admin receives: ₹{data.get("Admin_Receives_Via_Payroll", 0):.2f}', 'success')
             else:
                 flash('Donation processed successfully!', 'success')
             return redirect(url_for('transactions'))
