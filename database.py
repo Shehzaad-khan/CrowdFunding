@@ -9,7 +9,7 @@ class Database:
     def __init__(self):
         self.host = os.getenv('DB_HOST', 'localhost')
         self.user = os.getenv('DB_USER', 'root')
-        self.password = os.getenv('DB_PASSWORD', 'Shiva@12345')
+        self.password = os.getenv('DB_PASSWORD', 'Khan@2004')
         self.database = os.getenv('DB_NAME', 'CrowdfundingDB')
         
     def get_connection(self):
@@ -108,8 +108,8 @@ class Database:
         result = self.fetch_one("SELECT COALESCE(SUM(goal_amount), 0) as total FROM Fundraiser")
         stats['total_goal'] = result.get('total', 0) if result else 0
         
-        result = self.fetch_one("SELECT COALESCE(SUM(admin_commission), 0) as total FROM Transactions")
-        stats['total_commission'] = result.get('total', 0) if result else 0
+        result = self.fetch_one("SELECT COALESCE(SUM(platform_fee), 0) as total FROM Transactions")
+        stats['total_platform_fee'] = result.get('total', 0) if result else 0
         
         result = self.fetch_one("SELECT COUNT(*) as count FROM Visits")
         stats['total_visits'] = result.get('count', 0) if result else 0
@@ -119,7 +119,7 @@ class Database:
     def get_recent_transactions(self, limit=5):
         query = """
         SELECT t.Transaction_id, d.dname as donor_name, f.title as fundraiser_title, 
-               t.amount, t.admin_commission, t.net_amount, t.payment_mode, t.transaction_date
+               t.amount, t.platform_fee, t.net_amount, t.payment_mode, t.transaction_date
         FROM Transactions t
         JOIN Donor d ON t.donor_id = d.donor_id
         JOIN Fundraiser f ON t.fundraiser_no = f.fundraiser_no
@@ -162,11 +162,11 @@ class Database:
     
     def get_all_administrators(self):
         query = """
-        SELECT a.Admin_id, a.name, a.email, a.total_commission,
+        SELECT a.Admin_id, a.name, a.email, a.total_earnings,
                GROUP_CONCAT(ap.A_phone SEPARATOR ', ') as phones
         FROM Administrator a
         LEFT JOIN Admins_phone ap ON a.Admin_id = ap.Admin_id
-        GROUP BY a.Admin_id, a.name, a.email, a.total_commission
+        GROUP BY a.Admin_id, a.name, a.email, a.total_earnings
         """
         return self.fetch_all(query)
     
