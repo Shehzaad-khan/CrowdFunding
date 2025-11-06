@@ -24,8 +24,8 @@
                         <th>Donor</th>
                         <th>Fundraiser</th>
                         <th>Gross Amount</th>
-                        <th>Commission (1%)</th>
-                        <th>Net Amount</th>
+                        <th>Platform Fee (1%)</th>
+                        <th>Net Amount (99%)</th>
                         <th>Payment Mode</th>
                         <th>Date</th>
                         <th>Status</th>
@@ -38,7 +38,7 @@
                         <td>{{ trans.donor_name }}</td>
                         <td>{{ trans.fundraiser_title }}</td>
                         <td>₹{{ "{:,.2f}".format(trans.amount) }}</td>
-                        <td class="text-warning">₹{{ "{:,.2f}".format(trans.admin_commission) }}</td>
+                        <td class="text-warning">₹{{ "{:,.2f}".format(trans.platform_fee) }}</td>
                         <td class="text-success">₹{{ "{:,.2f}".format(trans.net_amount) }}</td>
                         <td><span class="badge bg-info">{{ trans.payment_mode }}</span></td>
                         <td>{{ trans.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>

@@ -24,7 +24,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone Numbers</th>
-                        <th>Total Commission</th>
+                        <th>Total Earnings</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -35,7 +35,7 @@
                         <td>{{ admin.name }}</td>
                         <td>{{ admin.email }}</td>
                         <td>{{ admin.phones if admin.phones else 'N/A' }}</td>
-                        <td class="text-success"><strong>₹{{ "{:,.2f}".format(admin.total_commission or 0) }}</strong></td>
+                        <td class="text-success"><strong>₹{{ "{:,.2f}".format(admin.total_earnings or 0) }}</strong></td>
                         <td>
                             <a href="{{ url_for('admin_earnings', admin_id=admin.Admin_id) }}" class="btn btn-sm btn-info btn-action">
                                 <i class="bi bi-currency-dollar"></i> Earnings

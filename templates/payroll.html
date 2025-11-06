@@ -24,8 +24,8 @@
                         <th>Administrator</th>
                         <th>Fundraiser</th>
                         <th>Transaction ID</th>
-                        <th>Net Amount Released</th>
-                        <th>Commission Earned</th>
+                        <th>Admin Earnings (99%)</th>
+                        <th>Platform Fee Deducted (1%)</th>
                         <th>Payout Date</th>
                         <th>Status</th>
                     </tr>
@@ -43,8 +43,8 @@
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="text-success">₹{{ "{:,.2f}".format(pay.amount_released) }}</td>
-                        <td class="text-warning"><strong>₹{{ "{:,.2f}".format(pay.commission_amount) }}</strong></td>
+                        <td class="text-success"><strong>₹{{ "{:,.2f}".format(pay.admin_earnings) }}</strong></td>
+                        <td class="text-warning">₹{{ "{:,.2f}".format(pay.platform_fee_deducted) }}</td>
                         <td>{{ pay.payout_date.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td><span class="badge bg-success">⚡ AUTO-GENERATED</span></td>
                     </tr>

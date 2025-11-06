@@ -1,8 +1,13 @@
 -- ==============================
--- COMPLETE CROWDFUNDING DATABASE MANAGEMENT SYSTEM
--- With Auto-Commission, Visit Tracking & Interest Level Management
--- All Scenarios Covered - Production Ready
+-- CORRECTED CROWDFUNDING DATABASE MANAGEMENT SYSTEM
+-- Platform Fee Model: 1% Platform Fee + 99% Admin Earnings
 -- ==============================
+
+-- Key Changes:
+-- 1. 1% is PLATFORM FEE (platform revenue), NOT admin commission
+-- 2. Admin receives 99% of donation (net amount after platform fee)
+-- 3. Renamed admin_commission → platform_fee for clarity
+-- 4. Renamed total_commission → total_earnings for administrators
 
 CREATE DATABASE IF NOT EXISTS CrowdfundingDB;
 USE CrowdfundingDB;
@@ -22,13 +27,17 @@ DROP TABLE IF EXISTS Donor;
 -- 2. CREATE TABLES
 -- ==============================
 
--- Administrator table with commission tracking
+-- ==============================
+-- CORRECTED TABLE: Administrator
+-- total_earnings = Sum of all payouts received (99% of donations)
+-- ==============================
 CREATE TABLE Administrator (
     Admin_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    total_commission DECIMAL(12,2) DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    total_earnings DECIMAL(12,2) DEFAULT 0,  -- Changed from total_commission
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_admin_email (email)
 );
 
 -- Administrator phone numbers (multi-valued attribute)
@@ -47,7 +56,8 @@ CREATE TABLE Donor (
     demail VARCHAR(100) UNIQUE NOT NULL,
     dphone VARCHAR(20),
     total_donated DECIMAL(12,2) DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_donor_email (demail)
 );
 
 -- Fundraiser table
@@ -65,33 +75,46 @@ CREATE TABLE Fundraiser (
     fundraiser_owner_name VARCHAR(100),
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Admin_id) REFERENCES Administrator(Admin_id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_fundraiser_status (status),
+    INDEX idx_fundraiser_deadline (deadline)
 );
 
--- Transactions table (IMMUTABLE - Cannot be deleted or updated)
+-- ==============================
+-- CORRECTED TABLE: Transactions
+-- platform_fee = 1% kept by platform
+-- net_amount = 99% goes to fundraiser (and admin via payroll)
+-- ==============================
 CREATE TABLE Transactions (
     Transaction_id INT PRIMARY KEY AUTO_INCREMENT,
     donor_id INT NOT NULL,
     fundraiser_no INT NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
-    admin_commission DECIMAL(12,2) NOT NULL,
-    net_amount DECIMAL(12,2) NOT NULL,
+    platform_fee DECIMAL(12,2) NOT NULL,  -- Changed from admin_commission
+    net_amount DECIMAL(12,2) NOT NULL,    -- 99% after platform fee
     payment_mode VARCHAR(50) NOT NULL,
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (donor_id) REFERENCES Donor(donor_id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (fundraiser_no) REFERENCES Fundraiser(fundraiser_no)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    INDEX idx_trans_date (transaction_date),
+    INDEX idx_trans_donor (donor_id),
+    INDEX idx_trans_fundraiser (fundraiser_no)
 );
 
--- Payroll table (AUTO-GENERATED - System managed)
+-- ==============================
+-- CORRECTED TABLE: Payroll
+-- admin_earnings = 99% of donation (net_amount)
+-- platform_fee_deducted = 1% platform fee from that transaction
+-- ==============================
 CREATE TABLE Payroll (
     Payroll_id INT PRIMARY KEY AUTO_INCREMENT,
     Admin_id INT,
     fundraiser_no INT,
     Transaction_id INT,
-    amount_released DECIMAL(12,2) NOT NULL,
-    commission_amount DECIMAL(12,2) NOT NULL,
+    admin_earnings DECIMAL(12,2) NOT NULL,        -- Changed from amount_released
+    platform_fee_deducted DECIMAL(12,2) NOT NULL, -- Changed from commission_amount
     payout_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     payout_type VARCHAR(50) DEFAULT 'Per Transaction',
     FOREIGN KEY (Admin_id) REFERENCES Administrator(Admin_id)
@@ -99,7 +122,9 @@ CREATE TABLE Payroll (
     FOREIGN KEY (fundraiser_no) REFERENCES Fundraiser(fundraiser_no)
         ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (Transaction_id) REFERENCES Transactions(Transaction_id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    INDEX idx_payroll_admin (Admin_id),
+    INDEX idx_payroll_date (payout_date)
 );
 
 -- Visits table (AUTO-TRACKED with interest level management)
@@ -114,7 +139,10 @@ CREATE TABLE Visits (
     FOREIGN KEY (donor_id) REFERENCES Donor(donor_id)
         ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (fundraiser_no) REFERENCES Fundraiser(fundraiser_no)
-        ON DELETE CASCADE ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_visit_donor (donor_id),
+    INDEX idx_visit_fundraiser (fundraiser_no),
+    INDEX idx_visit_date (visit_date)
 );
 
 -- ==============================
@@ -147,25 +175,25 @@ VALUES
 (3, 'AXIS-9999', 'Education for All', 'Providing books and supplies to underprivileged children.', 100000, '2025-12-31', 'Active', 'Arjun', 100000);
 
 -- ==============================
--- 4. UTILITY FUNCTIONS
+-- 4. CORRECTED UTILITY FUNCTIONS
 -- ==============================
 
 DELIMITER //
 
--- Calculate 1% commission
-CREATE FUNCTION CalculateCommission(amount DECIMAL(12,2))
+-- Calculate 1% platform fee
+CREATE FUNCTION CalculatePlatformFee(amount DECIMAL(12,2))
 RETURNS DECIMAL(12,2)
 DETERMINISTIC
 BEGIN
     RETURN ROUND(amount * 0.01, 2);
 END //
 
--- Calculate net amount after commission
+-- Calculate net amount (99%) after platform fee
 CREATE FUNCTION CalculateNetAmount(amount DECIMAL(12,2))
 RETURNS DECIMAL(12,2)
 DETERMINISTIC
 BEGIN
-    RETURN amount - CalculateCommission(amount);
+    RETURN amount - CalculatePlatformFee(amount);
 END //
 
 -- Get remaining amount for fundraiser
@@ -225,13 +253,12 @@ END //
 DELIMITER ;
 
 -- ==============================
--- 11. CRITICAL TRIGGERS (SECURITY & AUTOMATION)
+-- 11. CORRECTED TRIGGERS (SECURITY & AUTOMATION)
 -- ==============================
 
 DELIMITER //
 
--- TRIGGER 1: Auto-calculate commission and update amounts on transaction
--- This trigger fires BEFORE insert to set commission values
+-- TRIGGER 1: Calculate platform fee before transaction insert
 CREATE TRIGGER trg_before_transaction_insert
 BEFORE INSERT ON Transactions
 FOR EACH ROW
@@ -252,8 +279,8 @@ BEGIN
         SET MESSAGE_TEXT = 'Error: Fundraiser is not active. Cannot accept donations.';
     END IF;
     
-    -- Calculate and set commission fields (1% commission)
-    SET NEW.admin_commission = CalculateCommission(NEW.amount);
+    -- Calculate and set platform fee (1%) and net amount (99%)
+    SET NEW.platform_fee = CalculatePlatformFee(NEW.amount);
     SET NEW.net_amount = CalculateNetAmount(NEW.amount);
     
     -- Check if donation would exceed goal
@@ -263,20 +290,21 @@ BEGIN
     END IF;
 END //
 
--- TRIGGER 2: Auto-update fundraiser amounts and create payroll AFTER transaction
+-- TRIGGER 2: After transaction, update amounts and create payroll
+-- Admin receives net_amount (99%) via payroll
 CREATE TRIGGER trg_after_transaction_insert
 AFTER INSERT ON Transactions
 FOR EACH ROW
 BEGIN
     DECLARE v_admin_id INT;
     
-    -- Update fundraiser raised amount (net amount after commission)
+    -- Update fundraiser raised amount with net amount (99%)
     UPDATE Fundraiser 
     SET raised_amount = raised_amount + NEW.net_amount,
         remaining_amount = goal_amount - (raised_amount + NEW.net_amount)
     WHERE fundraiser_no = NEW.fundraiser_no;
     
-    -- Update donor's total donated
+    -- Update donor's total donated (gross amount)
     UPDATE Donor 
     SET total_donated = total_donated + NEW.amount 
     WHERE donor_id = NEW.donor_id;
@@ -286,13 +314,13 @@ BEGIN
     FROM Fundraiser 
     WHERE fundraiser_no = NEW.fundraiser_no;
     
-    -- Auto-create payroll entry for administrator (1% commission)
-    INSERT INTO Payroll (Admin_id, fundraiser_no, Transaction_id, amount_released, commission_amount)
-    VALUES (v_admin_id, NEW.fundraiser_no, NEW.Transaction_id, NEW.net_amount, NEW.admin_commission);
+    -- Create payroll: Admin receives net_amount (99%)
+    INSERT INTO Payroll (Admin_id, fundraiser_no, Transaction_id, admin_earnings, platform_fee_deducted)
+    VALUES (v_admin_id, NEW.fundraiser_no, NEW.Transaction_id, NEW.net_amount, NEW.platform_fee);
     
-    -- Update administrator's total commission
+    -- Update administrator's total earnings (NOT commission)
     UPDATE Administrator 
-    SET total_commission = total_commission + NEW.admin_commission 
+    SET total_earnings = total_earnings + NEW.net_amount 
     WHERE Admin_id = v_admin_id;
 END //
 
@@ -380,7 +408,7 @@ BEGIN
     -- Only allow inserts that come from transaction trigger (have Transaction_id)
     IF NEW.Transaction_id IS NULL AND NEW.payout_type = 'Per Transaction' THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'SECURITY: Payroll entries are automatically created by the system. Use ProcessDonation procedure.';
+        SET MESSAGE_TEXT = 'SECURITY: Payroll entries are automatically created by the system.';
     END IF;
 END //
 
@@ -416,7 +444,7 @@ END //
 DELIMITER ;
 
 -- ==============================
--- 12. VIEWS FOR REPORTING
+-- 12. CORRECTED VIEWS FOR REPORTING
 -- ==============================
 
 CREATE OR REPLACE VIEW vw_active_fundraisers AS
@@ -454,8 +482,8 @@ SELECT
     f.fundraiser_owner_name,
     a.name AS admin_name,
     t.amount AS gross_amount,
-    t.admin_commission AS commission_1_percent,
-    t.net_amount AS net_to_fundraiser,
+    t.platform_fee AS platform_fee_1_percent,
+    t.net_amount AS net_to_fundraiser_and_admin,
     t.payment_mode,
     t.transaction_date,
     'IMMUTABLE' AS record_status
@@ -488,18 +516,19 @@ SELECT
     a.Admin_id,
     a.name AS admin_name,
     a.email,
-    a.total_commission AS total_commission_earned,
+    a.total_earnings AS total_earnings_received,
     COUNT(DISTINCT f.fundraiser_no) AS total_fundraisers,
     COUNT(DISTINCT CASE WHEN f.status = 'Active' THEN f.fundraiser_no END) AS active_fundraisers,
-    COALESCE(SUM(f.raised_amount), 0) AS total_funds_raised,
+    COALESCE(SUM(f.raised_amount), 0) AS total_funds_managed,
     COUNT(DISTINCT t.Transaction_id) AS total_transactions,
-    COUNT(DISTINCT p.Payroll_id) AS total_payouts
+    COUNT(DISTINCT p.Payroll_id) AS total_payouts,
+    COALESCE(SUM(t.platform_fee), 0) AS total_platform_fees_from_fundraisers
 FROM Administrator a
 LEFT JOIN Fundraiser f ON a.Admin_id = f.Admin_id
 LEFT JOIN Transactions t ON f.fundraiser_no = t.fundraiser_no
 LEFT JOIN Payroll p ON a.Admin_id = p.Admin_id
 GROUP BY a.Admin_id
-ORDER BY a.total_commission DESC;
+ORDER BY a.total_earnings DESC;
 
 CREATE OR REPLACE VIEW vw_high_interest_donors AS
 SELECT 
@@ -696,10 +725,43 @@ SELECT 'Visits', COUNT(*) FROM Visits;
 -- System Status: ✓ COMPLETE
 -- Security Level: ✓ HIGH
 -- Audit Trail: ✓ ENABLED
--- Auto-Commission: ✓ ACTIVE (1%)
+-- Platform Fee Model: ✓ ACTIVE (1% Platform Fee, 99% Admin Earnings)
 -- Visit Tracking: ✓ ACTIVE
 -- Interest Level: ✓ AUTO-UPDATE
 -- Data Integrity: ✓ ENFORCED
+
+-- ==============================
+-- CORRECTED USAGE EXAMPLES
+-- ==============================
+
+/*
+CORRECTED DONATION FLOW:
+
+When donor donates ₹10,000:
+1. Gross amount: ₹10,000 (what donor pays)
+2. Platform fee (1%): ₹100 (platform keeps this)
+3. Net amount (99%): ₹9,900 (goes to fundraiser)
+4. Admin receives: ₹9,900 (via payroll entry)
+
+BREAKDOWN:
+- Platform revenue: ₹100
+- Fundraiser balance: +₹9,900
+- Admin earnings: +₹9,900
+- Donor paid: ₹10,000
+
+CALL ProcessDonation(1, 1, 10000.00, 'UPI');
+-- Returns:
+-- Gross_Amount: 10000.00
+-- Platform_Fee_1_Percent: 100.00 (platform keeps)
+-- Net_To_Fundraiser: 9900.00
+-- Admin_Receives: 9900.00 (via payroll)
+
+KEY POINTS:
+- Platform keeps 1% fee (₹100)
+- Admin receives 99% net amount (₹9,900)
+- Fundraiser receives 99% net amount (₹9,900)
+- Platform fee is NOT given to admin
+*/
 
 -- ==============================
 -- 5. ADMINISTRATOR PROCEDURES
@@ -1047,7 +1109,7 @@ DELIMITER ;
 
 DELIMITER //
 
--- MAIN PROCEDURE: Process donation with automatic commission, payroll, and visit tracking
+-- MAIN PROCEDURE: Process donation with automatic platform fee, payroll, and visit tracking
 CREATE PROCEDURE ProcessDonation(
     IN p_donor_id INT, 
     IN p_fundraiser_no INT, 
@@ -1055,7 +1117,7 @@ CREATE PROCEDURE ProcessDonation(
     IN p_payment_mode VARCHAR(50)
 )
 BEGIN
-    DECLARE v_commission DECIMAL(12,2);
+    DECLARE v_platform_fee DECIMAL(12,2);
     DECLARE v_net_amount DECIMAL(12,2);
     DECLARE v_admin_id INT;
     DECLARE v_visit_count INT;
@@ -1097,8 +1159,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Amount must be greater than 0';
     END IF;
     
-    -- Calculate commission and net amount
-    SET v_commission = CalculateCommission(p_amount);
+    -- Calculate platform fee (1%) and net amount (99%)
+    SET v_platform_fee = CalculatePlatformFee(p_amount);
     SET v_net_amount = CalculateNetAmount(p_amount);
     
     -- Check if donation exceeds remaining amount
@@ -1108,8 +1170,8 @@ BEGIN
     END IF;
     
     -- Insert transaction (triggers will handle the rest)
-    INSERT INTO Transactions (donor_id, fundraiser_no, amount, admin_commission, net_amount, payment_mode)
-    VALUES (p_donor_id, p_fundraiser_no, p_amount, v_commission, v_net_amount, p_payment_mode);
+    INSERT INTO Transactions (donor_id, fundraiser_no, amount, platform_fee, net_amount, payment_mode)
+    VALUES (p_donor_id, p_fundraiser_no, p_amount, v_platform_fee, v_net_amount, p_payment_mode);
     
     -- Auto-record visit for transaction
     SET v_visit_count = GetVisitCount(p_donor_id, p_fundraiser_no);
@@ -1125,13 +1187,15 @@ BEGIN
     
     COMMIT;
     
-    -- Return success message with details
+    -- Return success message with corrected breakdown
     SELECT 
         'Donation processed successfully!' AS Message, 
         LAST_INSERT_ID() AS Transaction_id,
         p_amount AS Gross_Amount,
-        v_commission AS Commission_1_Percent,
+        v_platform_fee AS Platform_Fee_1_Percent,
         v_net_amount AS Net_To_Fundraiser,
+        v_net_amount AS Admin_Receives_Via_Payroll,
+        CONCAT('Platform keeps: ₹', v_platform_fee, ' | Admin receives: ₹', v_net_amount) AS Fee_Distribution,
         v_interest_level AS Donor_Interest_Level,
         v_visit_count + 1 AS Total_Visits_To_Fundraiser;
 END //
@@ -1146,14 +1210,17 @@ BEGIN
         f.title AS Fundraiser_Title,
         f.fundraiser_owner_name AS Fundraiser_Owner,
         t.amount AS Gross_Amount,
-        t.admin_commission AS Commission_Amount,
+        t.platform_fee AS Platform_Fee,
         t.net_amount AS Net_Amount,
         t.payment_mode,
         t.transaction_date,
         a.name AS Administrator_Name,
         p.Payroll_id,
-        p.amount_released AS Amount_Released_To_Admin,
-        p.payout_date
+        p.admin_earnings AS Admin_Received,
+        p.platform_fee_deducted AS Platform_Fee_From_This_Transaction,
+        p.payout_date,
+        CONCAT('Platform fee: ₹', t.platform_fee, ' (1%) | ',
+               'Admin received: ₹', p.admin_earnings, ' (99%)') AS Fee_Distribution
     FROM Transactions t
     JOIN Donor d ON t.donor_id = d.donor_id
     JOIN Fundraiser f ON t.fundraiser_no = f.fundraiser_no
@@ -1190,7 +1257,7 @@ BEGIN
         COUNT(DISTINCT t.Transaction_id) AS Total_Transactions,
         COUNT(DISTINCT v.visit_id) AS Total_Visits,
         COUNT(DISTINCT v.donor_id) AS Unique_Visitors,
-        COALESCE(SUM(t.admin_commission), 0) AS Total_Commission_Generated,
+        COALESCE(SUM(t.platform_fee), 0) AS Total_Platform_Fees,
         COALESCE(SUM(t.net_amount), 0) AS Total_Net_Amount
     FROM Fundraiser f
     LEFT JOIN Administrator a ON f.Admin_id = a.Admin_id
@@ -1211,7 +1278,7 @@ BEGIN
         t.Transaction_id,
         f.title AS Fundraiser_Title,
         t.amount AS Gross_Amount,
-        t.admin_commission,
+        t.platform_fee,
         t.net_amount,
         t.payment_mode,
         t.transaction_date,
@@ -1229,12 +1296,17 @@ BEGIN
         a.Admin_id,
         a.name,
         a.email,
-        a.total_commission AS Total_Commission_Earned,
+        a.total_earnings AS Total_Earnings_Received,
         COUNT(DISTINCT f.fundraiser_no) AS Total_Fundraisers,
         COUNT(DISTINCT CASE WHEN f.status = 'Active' THEN f.fundraiser_no END) AS Active_Fundraisers,
-        COALESCE(SUM(f.raised_amount), 0) AS Total_Funds_Raised,
+        COALESCE(SUM(f.raised_amount), 0) AS Total_Funds_Managed,
         COUNT(DISTINCT t.Transaction_id) AS Total_Transactions,
-        COUNT(DISTINCT p.Payroll_id) AS Total_Payouts
+        COUNT(DISTINCT p.Payroll_id) AS Total_Payouts,
+        COALESCE(SUM(t.platform_fee), 0) AS Platform_Fees_From_My_Fundraisers,
+        CONCAT('Admin receives 99% of donations (₹', 
+               COALESCE(SUM(p.admin_earnings), 0), 
+               ') | Platform collects 1% (₹', 
+               COALESCE(SUM(t.platform_fee), 0), ')') AS Earnings_Breakdown
     FROM Administrator a
     LEFT JOIN Fundraiser f ON a.Admin_id = f.Admin_id
     LEFT JOIN Transactions t ON f.fundraiser_no = t.fundraiser_no
@@ -1256,7 +1328,7 @@ BEGIN
     SELECT 'PAYROLL' AS Record_Type, 
            Payroll_id AS ID, 
            payout_date AS Date_Time, 
-           CONCAT('₹', FORMAT(amount_released, 2)) AS Amount,
+           CONCAT('₹', FORMAT(admin_earnings, 2)) AS Amount,
            'AUTO-GENERATED' AS Status
     FROM Payroll 
     WHERE fundraiser_no = p_fundraiser_no
@@ -1281,11 +1353,18 @@ BEGIN
         (SELECT COUNT(*) FROM Fundraiser WHERE status = 'Active') AS Active_Fundraisers,
         (SELECT COUNT(*) FROM Fundraiser WHERE status = 'Goal Reached') AS Completed_Fundraisers,
         (SELECT COUNT(*) FROM Transactions) AS Total_Transactions,
-        (SELECT COALESCE(SUM(amount), 0) FROM Transactions) AS Total_Gross_Amount,
-        (SELECT COALESCE(SUM(admin_commission), 0) FROM Transactions) AS Total_Commission,
-        (SELECT COALESCE(SUM(net_amount), 0) FROM Transactions) AS Total_Net_Amount,
+        (SELECT COALESCE(SUM(amount), 0) FROM Transactions) AS Total_Gross_Donations,
+        (SELECT COALESCE(SUM(platform_fee), 0) FROM Transactions) AS Total_Platform_Revenue,
+        (SELECT COALESCE(SUM(net_amount), 0) FROM Transactions) AS Total_To_Fundraisers,
+        (SELECT COALESCE(SUM(admin_earnings), 0) FROM Payroll) AS Total_Admin_Earnings,
         (SELECT COUNT(*) FROM Visits) AS Total_Visits,
-        (SELECT COUNT(DISTINCT donor_id) FROM Visits) AS Unique_Visitors;
+        (SELECT COUNT(DISTINCT donor_id) FROM Visits) AS Unique_Visitors,
+        CONCAT('Platform earned: ₹', 
+               (SELECT COALESCE(SUM(platform_fee), 0) FROM Transactions),
+               ' (1% of all donations)') AS Platform_Revenue_Note,
+        CONCAT('Admins earned: ₹',
+               (SELECT COALESCE(SUM(admin_earnings), 0) FROM Payroll),
+               ' (99% of all donations)') AS Admin_Revenue_Note;
 END //
 
 DELIMITER ;

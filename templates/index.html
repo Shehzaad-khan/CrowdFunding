@@ -56,8 +56,8 @@
     <div class="col-md-3">
         <div class="card stat-card">
             <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Total Commission (1%)</h6>
-                <div class="stat-value text-warning">₹{{ "{:,.2f}".format(stats.total_commission or 0) }}</div>
+                <h6 class="card-subtitle mb-2 text-muted">Platform Revenue (1%)</h6>
+                <div class="stat-value text-warning">₹{{ "{:,.2f}".format(stats.total_platform_fee or 0) }}</div>
             </div>
         </div>
     </div>
@@ -93,7 +93,7 @@
                                 <th>Donor</th>
                                 <th>Fundraiser</th>
                                 <th>Gross</th>
-                                <th>Commission</th>
+                                <th>Platform Fee</th>
                                 <th>Net</th>
                             </tr>
                         </thead>
@@ -103,7 +103,7 @@
                                 <td>{{ trans.donor_name }}</td>
                                 <td>{{ trans.fundraiser_title[:25] }}...</td>
                                 <td>₹{{ "{:,.0f}".format(trans.amount) }}</td>
-                                <td class="text-warning">₹{{ "{:,.0f}".format(trans.admin_commission) }}</td>
+                                <td class="text-warning">₹{{ "{:,.0f}".format(trans.platform_fee) }}</td>
                                 <td class="text-success">₹{{ "{:,.0f}".format(trans.net_amount) }}</td>
                             </tr>
                             {% endfor %}

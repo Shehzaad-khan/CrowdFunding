@@ -35,8 +35,9 @@
                 <h3 class="text-success">{{ platform_stats.Total_Transactions }}</h3>
             </div>
             <div class="col-md-2">
-                <h6 class="text-muted">Total Commission</h6>
-                <h3 class="text-warning">₹{{ "{:,.0f}".format(platform_stats.Total_Commission) }}</h3>
+                <h6 class="text-muted">Platform Revenue</h6>
+                <h3 class="text-warning">₹{{ "{:,.0f}".format(platform_stats.Total_Platform_Revenue or platform_stats.Total_Commission) }}</h3>
+                <small class="text-muted">1% fee</small>
             </div>
             <div class="col-md-2">
                 <h6 class="text-muted">Total Visits</h6>
@@ -47,16 +48,18 @@
         <hr>
         <div class="row text-center">
             <div class="col-md-4">
-                <h6 class="text-muted">Gross Amount</h6>
-                <h4>₹{{ "{:,.2f}".format(platform_stats.Total_Gross_Amount) }}</h4>
+                <h6 class="text-muted">Total Donations (Gross)</h6>
+                <h4>₹{{ "{:,.2f}".format(platform_stats.Total_Gross_Donations or platform_stats.Total_Gross_Amount) }}</h4>
             </div>
             <div class="col-md-4">
-                <h6 class="text-muted">Platform Fee (1%)</h6>
-                <h4 class="text-warning">₹{{ "{:,.2f}".format(platform_stats.Total_Commission) }}</h4>
+                <h6 class="text-muted">Platform Revenue (1%)</h6>
+                <h4 class="text-warning">₹{{ "{:,.2f}".format(platform_stats.Total_Platform_Revenue or platform_stats.Total_Commission) }}</h4>
+                <small class="text-muted">Platform keeps</small>
             </div>
             <div class="col-md-4">
-                <h6 class="text-muted">Net to Fundraisers</h6>
-                <h4 class="text-success">₹{{ "{:,.2f}".format(platform_stats.Total_Net_Amount) }}</h4>
+                <h6 class="text-muted">To Fundraisers (99%)</h6>
+                <h4 class="text-success">₹{{ "{:,.2f}".format(platform_stats.Total_To_Fundraisers or platform_stats.Total_Net_Amount) }}</h4>
+                <small class="text-muted">Admin receives via payroll</small>
             </div>
         </div>
     </div>

@@ -19,8 +19,9 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h6 class="text-muted">Total Commission Earned</h6>
-                <h2 class="text-success">₹{{ "{:,.2f}".format(earnings.Total_Commission_Earned or 0) }}</h2>
+                <h6 class="text-muted">Total Earnings Received</h6>
+                <h2 class="text-success">₹{{ "{:,.2f}".format(earnings.Total_Earnings_Received or 0) }}</h2>
+                <small class="text-muted">99% of donations</small>
             </div>
         </div>
     </div>
@@ -36,8 +37,8 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h6 class="text-muted">Total Funds Raised</h6>
-                <h2 class="text-info">₹{{ "{:,.2f}".format(earnings.Total_Funds_Raised or 0) }}</h2>
+                <h6 class="text-muted">Total Funds Managed</h6>
+                <h2 class="text-info">₹{{ "{:,.2f}".format(earnings.Total_Funds_Managed or 0) }}</h2>
             </div>
         </div>
     </div>
@@ -51,6 +52,13 @@
         </div>
     </div>
 </div>
+
+<!-- Earnings Breakdown -->
+{% if earnings.Earnings_Breakdown %}
+<div class="alert alert-info">
+    <strong>💰 Earnings Breakdown:</strong> {{ earnings.Earnings_Breakdown }}
+</div>
+{% endif %}
 {% endif %}
 
 <!-- Payroll History -->
@@ -66,8 +74,8 @@
                         <th>Payroll ID</th>
                         <th>Fundraiser</th>
                         <th>Transaction ID</th>
-                        <th>Net Amount Released</th>
-                        <th>Commission Earned</th>
+                        <th>Admin Earnings (99%)</th>
+                        <th>Platform Fee (1%)</th>
                         <th>Payout Date</th>
                         <th>Type</th>
                     </tr>
@@ -84,8 +92,8 @@
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="text-success">₹{{ "{:,.2f}".format(payroll.amount_released) }}</td>
-                        <td class="text-warning"><strong>₹{{ "{:,.2f}".format(payroll.commission_amount) }}</strong></td>
+                        <td class="text-success"><strong>₹{{ "{:,.2f}".format(payroll.admin_earnings) }}</strong></td>
+                        <td class="text-warning">₹{{ "{:,.2f}".format(payroll.platform_fee_deducted) }}</td>
                         <td>{{ payroll.payout_date.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td><span class="badge bg-primary">⚡ {{ payroll.payout_type }}</span></td>
                     </tr>
